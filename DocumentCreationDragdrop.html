@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Drag and Drop Ordering</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+    }
+    #container {
+      display: flex;
+      width: 60vw;
+    }
+    .logo {
+      margin-right: 20px;
+      display: flex;
+      align-items: center;
+    }
+    .logo img {
+      width: 80px;
+      height: auto;
+    }
+    .bins {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 80vh;
+      width: 30%;
+      margin-right: 20px;
+      position: relative;
+    }
+    .bin {
+      border: 2px dashed #333;
+      height: calc(80vh / 10);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      background-color: #f9f9f9;
+    }
+    .bin[data-index="0"],
+    .bin[data-index="9"] {
+     border-radius: 50% / 100%;
+    }
+    .labels {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 70%;
+    }
+    .label {
+      padding: 10px;
+      background-color: #cce5ff;
+      border: 1px solid #333;
+      cursor: move;
+      font-size: 20px;
+      user-select: none;
+    }
+    .bin-controls {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    #submitBtn {
+      font-size: 20px;
+    }
+    #score {
+      margin-top: 10px;
+      font-size: 24px;
+      font-weight: bold;
+      color: green;
+      animation: blink 1s step-start 0s infinite;
+    }
+    @keyframes blink {
+      50% { opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <div class="logo">
+      <img src="BCRS Logo.jpg" alt="Logo">
+    </div>
+    <div class="bins" id="bins">
+      <!-- 10 bins -->
+      <div class="bin" data-index="0"></div>
+      <div class="bin" data-index="1"></div>
+      <div class="bin" data-index="2"></div>
+      <div class="bin" data-index="3"></div>
+      <div class="bin" data-index="4"></div>
+      <div class="bin" data-index="5"></div>
+      <div class="bin" data-index="6"></div>
+      <div class="bin" data-index="7"></div>
+      <div class="bin" data-index="8"></div>
+      <div class="bin" data-index="9"></div>
+      <div class="bin-controls">
+        <button id="submitBtn">Submit</button>
+        <div id="score"></div>
+      </div>
+    </div>
+    <div class="labels" id="labels"></div>
+  </div>
+
+  <script>
+    const steps = [
+      "START",
+      "Switch on the power",
+      "Turn on the computer",
+      "Start a new document",
+      "Work on your document",
+      "Save your work to disk",
+      "Quit the program",
+      "Select 'Shut down'",
+      "Switch off the power",
+      "STOP"
+    ];
+
+    const labelsContainer = document.getElementById("labels");
+    const bins = document.querySelectorAll(".bin");
+    const scoreDisplay = document.getElementById("score");
+
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+    }
+
+    function createLabels() {
+      const shuffled = [...steps];
+      shuffle(shuffled);
+      shuffled.forEach((text, index) => {
+        const div = document.createElement("div");
+        div.className = "label";
+        div.draggable = true;
+        div.textContent = text;
+        div.dataset.value = text;
+        div.addEventListener("dragstart", e => {
+          e.dataTransfer.setData("text", e.target.dataset.value);
+        });
+        labelsContainer.appendChild(div);
+      });
+    }
+
+    bins.forEach(bin => {
+      bin.addEventListener("dragover", e => e.preventDefault());
+      bin.addEventListener("drop", e => {
+        e.preventDefault();
+        const value = e.dataTransfer.getData("text");
+        const label = document.querySelector(`.label[data-value="${CSS.escape(value)}"]`);
+        if (label) {
+          const existing = bin.querySelector(".label");
+          if (existing && existing !== label) {
+            labelsContainer.appendChild(existing);
+          }
+          if (label.parentElement !== bin) {
+            bin.innerHTML = "";
+            bin.appendChild(label);
+          }
+        }
+      });
+    });
+
+    document.getElementById("submitBtn").onclick = () => {
+      let score = 0;
+      bins.forEach((bin, index) => {
+        const label = bin.querySelector(".label");
+        if (label && label.dataset.value === steps[index]) {
+          score++;
+        }
+      });
+      scoreDisplay.textContent = `Score: ${score} / 10`;
+    };
+
+    createLabels();
+  </script>
+</body>
+</html>
